@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}Semester Analytics{% endblock %}
+{% block header_title %}Semester-Wise Comparative Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Semester Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for sem_num in [1, 3, 5] %}
+        {% set sem_data = analytics.semester_stats[sem_num] if sem_num in analytics.semester_stats else {} %}
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-base text-slate-900">Semester {{ sem_num }}</h3>
+                <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded font-semibold">{{ sem_data.count or 0 }} Enrolled</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+                <div>
+                    <span class="text-slate-400">Avg Attendance</span>
+                    <p class="text-base font-bold text-slate-900">{{ sem_data.avg_attendance or 0 }}%</p>
+                </div>
+                <div>
+                    <span class="text-slate-400">Avg SGPA</span>
+                    <p class="text-base font-bold text-indigo-600">{{ sem_data.avg_sgpa or 0 }}</p>
+                </div>
+                <div>
+                    <span class="text-slate-400">Avg Assignments</span>
+                    <p class="text-base font-bold text-slate-900">{{ sem_data.avg_assignments or 0 }}%</p>
+                </div>
+                <div>
+                    <span class="text-slate-400">AI Performance</span>
+                    <p class="text-base font-bold text-blue-600">{{ sem_data.avg_ai_score or 0 }}</p>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-500">At-Risk Cases:</span>
+                <span class="font-bold {% if (sem_data.at_risk_count or 0) > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                    {{ sem_data.at_risk_count or 0 }} students
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Comparative Visual Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="font-semibold text-slate-900 mb-1">SGPA & Attendance Multi-Axis Comparison</h3>
+            <p class="text-xs text-slate-500 mb-4">Correlation across academic progression stages</p>
+            <div class="h-64">
+                <canvas id="semMultiChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="font-semibold text-slate-900 mb-1">Composite AI Index Progression</h3>
+            <p class="text-xs text-slate-500 mb-4">Batch level learning velocity</p>
+            <div class="h-64">
+                <canvas id="semAiLineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Semester Findings -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="font-semibold text-slate-900 mb-3">Academic Department Findings</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-lg">
+                <div class="font-bold text-emerald-800 flex items-center mb-1">
+                    <i class="fa-solid fa-trophy mr-1.5 text-emerald-600"></i> Leading Cohort: {{ analytics.best_semester }}
+                </div>
+                <p class="text-emerald-900">
+                    Exhibits the highest consistency across internal assignments and academic SGPA, demonstrating strong lab completion rates and curriculum grasp.
+                </p>
+            </div>
+            <div class="p-4 bg-amber-50/60 border border-amber-200 rounded-lg">
+                <div class="font-bold text-amber-800 flex items-center mb-1">
+                    <i class="fa-solid fa-bell mr-1.5 text-amber-600"></i> Intervention Recommended: {{ analytics.weakest_semester }}
+                </div>
+                <p class="text-amber-900">
+                    Flagged with lowest average attendance and assignment submission lag. Recommended to schedule faculty mentorship and internal revision tests.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Multi Axis Chart
+    const multiCtx = document.getElementById('semMultiChart').getContext('2d');
+    new Chart(multiCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Semester 1', 'Semester 3', 'Semester 5'],
+            datasets: [
+                {
+                    label: 'Attendance (%)',
+                    data: [
+                        {{ analytics.semester_stats[1].avg_attendance if 1 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[3].avg_attendance if 3 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[5].avg_attendance if 5 in analytics.semester_stats else 0 }}
+                    ],
+                    backgroundColor: '#6366f1'
+                },
+                {
+                    label: 'Assignments (%)',
+                    data: [
+                        {{ analytics.semester_stats[1].avg_assignments if 1 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[3].avg_assignments if 3 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[5].avg_assignments if 5 in analytics.semester_stats else 0 }}
+                    ],
+                    backgroundColor: '#06b6d4'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100 } }
+        }
+    });
+
+    // AI Progression Line Chart
+    const lineCtx = document.getElementById('semAiLineChart').getContext('2d');
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: ['Semester 1', 'Semester 3', 'Semester 5'],
+            datasets: [{
+                label: 'Average AI Academic Score',
+                data: [
+                    {{ analytics.semester_stats[1].avg_ai_score if 1 in analytics.semester_stats else 0 }},
+                    {{ analytics.semester_stats[3].avg_ai_score if 3 in analytics.semester_stats else 0 }},
+                    {{ analytics.semester_stats[5].avg_ai_score if 5 in analytics.semester_stats else 0 }}
+                ],
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 6,
+                pointBackgroundColor: '#4f46e5'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100 } }
+        }
+    });
+</script>
+{% endblock %}

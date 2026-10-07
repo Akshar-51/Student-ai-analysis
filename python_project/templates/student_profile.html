@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.name }} Profile{% endblock %}
+{% block header_title %}Student Performance Dossier{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Profile Bar -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-2xl shadow-inner">
+                {{ student.name[0] }}
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-xl font-bold text-slate-900">{{ student.name }}</h2>
+                    <span class="text-xs px-2.5 py-0.5 rounded font-semibold border {{ ai.category_badge }}">{{ ai.category }}</span>
+                    <span class="text-xs px-2.5 py-0.5 rounded font-semibold border {{ ai.risk_badge }}">{{ ai.risk_level }}</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Roll ID: <span class="font-semibold text-slate-700">{{ student.student_id }}</span> · Semester {{ student.semester }} · {{ student.email or 'No email recorded' }}</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('edit_student_info', student_id=student.id) }}" class="px-3.5 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-pen mr-1.5 text-slate-500"></i> Edit Student
+            </a>
+            <a href="{{ url_for('students_list') }}" class="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+                &larr; Back to Directory
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-medium">Composite AI Score</span>
+            <div class="text-2xl font-bold text-indigo-600 mt-1">{{ ai.ai_score }} <span class="text-xs text-slate-400 font-normal">/ 100</span></div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Weighted metric</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-medium">Class Attendance</span>
+            <div class="text-2xl font-bold {% if student.attendance < 75 %}text-rose-600{% else %}text-slate-900{% endif %} mt-1">
+                {{ student.attendance }}%
+            </div>
+            <p class="text-[11px] {% if student.attendance < 75 %}text-rose-600 font-semibold{% else %}text-emerald-600{% endif %} mt-0.5">
+                {% if student.attendance < 75 %}Critical (&lt; 75%){% else %}Compliant{% endif %}
+            </p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-medium">Academic SGPA</span>
+            <div class="text-2xl font-bold text-slate-900 mt-1">{{ student.sgpa }} <span class="text-xs text-slate-400 font-normal">/ 10.0</span></div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Weight 40%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-medium">Assignments</span>
+            <div class="text-2xl font-bold text-slate-900 mt-1">{{ student.assignments }}%</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Internal coursework</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-medium">Event Participation</span>
+            <div class="text-2xl font-bold text-slate-900 mt-1">{{ student.events }}%</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Extracurricular</p>
+        </div>
+    </div>
+
+    <!-- AI Diagnostics & Visual Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Visual Radar / Bar Breakdown -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-semibold text-slate-900">Academic Skill Vector</h3>
+                    <p class="text-xs text-slate-500">Multidimensional metric representation</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded">
+                        {{ ai.archetype }} ({{ ai.archetype_match }}% Match)
+                    </span>
+                </div>
+            </div>
+            <div class="h-64">
+                <canvas id="studentRadarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Explainable AI (XAI) Rationale -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <h3 class="font-semibold text-slate-900 mb-1">Explainable AI (XAI) Diagnosis</h3>
+                <p class="text-xs text-slate-500 mb-4">Transparent algorithmic justification for the computed academic index</p>
+
+                <!-- Strengths -->
+                <div class="mb-4">
+                    <p class="text-xs font-bold text-emerald-800 uppercase tracking-wide mb-1.5 flex items-center">
+                        <i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Academic Strengths
+                    </p>
+                    <ul class="space-y-1 text-xs text-slate-700">
+                        {% for st in ai.strengths %}
+                        <li class="bg-emerald-50/60 border border-emerald-100 p-2 rounded-lg">{{ st }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Weaknesses / Lag factors -->
+                <div>
+                    <p class="text-xs font-bold text-rose-800 uppercase tracking-wide mb-1.5 flex items-center">
+                        <i class="fa-solid fa-circle-exclamation text-rose-600 mr-1.5"></i> Performance Vulnerabilities
+                    </p>
+                    <ul class="space-y-1 text-xs text-slate-700">
+                        {% for wk in ai.weaknesses %}
+                        <li class="bg-rose-50/60 border border-rose-100 p-2 rounded-lg">{{ wk }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Risk triggers if any -->
+            {% if ai.risk_reasons %}
+            <div class="mt-4 pt-4 border-t border-slate-100 text-xs">
+                <span class="font-semibold text-slate-700">Active Alert Triggers:</span>
+                <p class="text-slate-600 mt-0.5">{{ ai.risk_reasons | join('; ') }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actionable AI Recommendations -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex items-center space-x-2 mb-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-slate-900">Personalized AI Action Plan & Recommendations</h3>
+                <p class="text-xs text-slate-500">Prescriptive interventions generated based on feature gaps</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            {% for rec in ai.recommendations %}
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 flex items-start space-x-2.5">
+                <span class="text-indigo-600 font-bold mt-0.5">&bull;</span>
+                <p>{{ rec }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const radarCtx = document.getElementById('studentRadarChart').getContext('2d');
+    new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Attendance', 'SGPA (Scaled)', 'Assignments', 'Events', 'Benchmark Std'],
+            datasets: [{
+                label: '{{ student.name }} Profile',
+                data: [
+                    {{ student.attendance }},
+                    {{ student.sgpa * 10 }},
+                    {{ student.assignments }},
+                    {{ student.events }},
+                    80
+                ],
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                borderColor: '#6366f1',
+                borderWidth: 2,
+                pointBackgroundColor: '#6366f1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { display: true },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

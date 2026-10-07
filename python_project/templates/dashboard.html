@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Academic Performance Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Top KPI Metrics -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Students</p>
+            <p class="text-2xl font-bold text-slate-900 mt-1">{{ analytics.total_students }}</p>
+            <p class="text-xs text-slate-400 mt-1">Active enrolled</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Avg Attendance</p>
+            <p class="text-2xl font-bold text-slate-900 mt-1">{{ analytics.avg_attendance }}%</p>
+            <p class="text-xs text-emerald-600 font-medium mt-1">Min threshold 75%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Avg SGPA</p>
+            <p class="text-2xl font-bold text-indigo-600 mt-1">{{ analytics.avg_sgpa }}</p>
+            <p class="text-xs text-slate-400 mt-1">Out of 10.0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Avg Assignments</p>
+            <p class="text-2xl font-bold text-slate-900 mt-1">{{ analytics.avg_assignments }}%</p>
+            <p class="text-xs text-slate-400 mt-1">Internal score</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Avg AI Index</p>
+            <p class="text-2xl font-bold text-blue-600 mt-1">{{ analytics.avg_ai_score }}</p>
+            <p class="text-xs text-slate-400 mt-1">Weighted metric</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-rose-200 shadow-sm bg-rose-50/30">
+            <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">High Risk Alert</p>
+            <p class="text-2xl font-bold text-rose-700 mt-1">{{ analytics.high_risk_count }}</p>
+            <a href="{{ url_for('at_risk_students') }}" class="text-xs text-rose-600 underline font-medium mt-1 inline-block">Review cases &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Semester Comparison Bar Chart -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-semibold text-slate-900">Semester Comparative Performance</h3>
+                    <p class="text-xs text-slate-500">Average SGPA, Attendance, and AI Composite Score across Semesters</p>
+                </div>
+                <span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-medium">BCA Cohort</span>
+            </div>
+            <div class="h-64">
+                <canvas id="semesterComparisonChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Academic Risk Distribution Doughnut Chart -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="mb-4">
+                <h3 class="font-semibold text-slate-900">Risk Distribution</h3>
+                <p class="text-xs text-slate-500">Classification by early warning engine</p>
+            </div>
+            <div class="h-64 flex items-center justify-center">
+                <canvas id="riskDoughnutChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables Row: Top Performers & Immediate At-Risk -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Performing Students -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-slate-900">Top Performing Scholars</h3>
+                    <p class="text-xs text-slate-500">Highest composite AI Academic Score</p>
+                </div>
+                <a href="{{ url_for('students_list', sort='sgpa_desc') }}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">View all &rarr;</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-100">
+                        <tr>
+                            <th class="p-3">Student</th>
+                            <th class="p-3">Sem</th>
+                            <th class="p-3">SGPA</th>
+                            <th class="p-3">Attendance</th>
+                            <th class="p-3">AI Score</th>
+                            <th class="p-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for s in top_performers %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-medium text-slate-900">{{ s.name }}</td>
+                            <td class="p-3 text-slate-600">Sem {{ s.semester }}</td>
+                            <td class="p-3 font-semibold text-indigo-600">{{ s.sgpa }}</td>
+                            <td class="p-3 text-slate-600">{{ s.attendance }}%</td>
+                            <td class="p-3 font-bold text-slate-900">{{ s.ai_score }}</td>
+                            <td class="p-3 text-right">
+                                <a href="{{ url_for('student_profile', student_id=s.id) }}" class="text-indigo-600 hover:text-indigo-800 font-medium">Profile</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Students Needing Attention (At-Risk) -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-slate-900">Early Warning Alerts</h3>
+                    <p class="text-xs text-slate-500">Students with attendance &lt; 75% or critical SGPA</p>
+                </div>
+                <a href="{{ url_for('at_risk_students') }}" class="text-xs text-rose-600 hover:text-rose-800 font-medium">Triage all &rarr;</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-100">
+                        <tr>
+                            <th class="p-3">Student</th>
+                            <th class="p-3">Sem</th>
+                            <th class="p-3">Attendance</th>
+                            <th class="p-3">SGPA</th>
+                            <th class="p-3">Primary Alert</th>
+                            <th class="p-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for s in at_risk_alerts %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-medium text-slate-900">{{ s.name }}</td>
+                            <td class="p-3 text-slate-600">Sem {{ s.semester }}</td>
+                            <td class="p-3 font-bold text-rose-600">{{ s.attendance }}%</td>
+                            <td class="p-3 text-slate-700 font-medium">{{ s.sgpa }}</td>
+                            <td class="p-3 text-slate-500 truncate max-w-xs">{{ s.risk_reasons[0] if s.risk_reasons else 'Intervention needed' }}</td>
+                            <td class="p-3 text-right">
+                                <a href="{{ url_for('student_profile', student_id=s.id) }}" class="text-rose-600 hover:text-rose-800 font-medium">Inspect</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="p-6 text-center text-slate-400">No high risk students detected! All students meet minimum criteria.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Semester Comparative Chart
+    const semCtx = document.getElementById('semesterComparisonChart').getContext('2d');
+    new Chart(semCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Semester 1', 'Semester 3', 'Semester 5'],
+            datasets: [
+                {
+                    label: 'Avg Attendance (%)',
+                    data: [
+                        {{ analytics.semester_stats[1].avg_attendance if 1 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[3].avg_attendance if 3 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[5].avg_attendance if 5 in analytics.semester_stats else 0 }}
+                    ],
+                    backgroundColor: '#6366f1'
+                },
+                {
+                    label: 'Avg SGPA (x10)',
+                    data: [
+                        {{ (analytics.semester_stats[1].avg_sgpa * 10) if 1 in analytics.semester_stats else 0 }},
+                        {{ (analytics.semester_stats[3].avg_sgpa * 10) if 3 in analytics.semester_stats else 0 }},
+                        {{ (analytics.semester_stats[5].avg_sgpa * 10) if 5 in analytics.semester_stats else 0 }}
+                    ],
+                    backgroundColor: '#10b981'
+                },
+                {
+                    label: 'AI Composite Score',
+                    data: [
+                        {{ analytics.semester_stats[1].avg_ai_score if 1 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[3].avg_ai_score if 3 in analytics.semester_stats else 0 }},
+                        {{ analytics.semester_stats[5].avg_ai_score if 5 in analytics.semester_stats else 0 }}
+                    ],
+                    backgroundColor: '#3b82f6'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+
+    // Risk Doughnut Chart
+    const riskCtx = document.getElementById('riskDoughnutChart').getContext('2d');
+    new Chart(riskCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+            datasets: [{
+                data: [
+                    {{ analytics.low_risk_count }},
+                    {{ analytics.medium_risk_count }},
+                    {{ analytics.high_risk_count }}
+                ],
+                backgroundColor: ['#10b981', '#f59e0b', '#f43f5e']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AcademiaAI{% endblock %} | AI Academic Management System</title>
+    <!-- Tailwind CSS CDN for instant, zero-build professional styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for responsive data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="h-full flex flex-col md:flex-row text-slate-800 antialiased">
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-slate-900 text-slate-200 flex flex-col shrink-0">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    <i class="fa-solid fa-graduation-cap text-base"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base text-white tracking-tight leading-tight">AcademiaAI</h1>
+                    <span class="text-xs text-slate-400">Academic Intelligence</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1.5 text-sm font-medium">
+            <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'dashboard' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('students_list') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint in ['students_list', 'student_profile', 'edit_student_info'] %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-users w-5 text-center"></i>
+                <span>Students</span>
+            </a>
+            <a href="{{ url_for('add_new_student') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'add_new_student' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-user-plus w-5 text-center"></i>
+                <span>Add Student</span>
+            </a>
+            <a href="{{ url_for('at_risk_students') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'at_risk_students' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-triangle-exclamation w-5 text-center text-amber-400"></i>
+                <span>At-Risk Alert</span>
+            </a>
+            <a href="{{ url_for('semester_analytics') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'semester_analytics' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-chart-simple w-5 text-center"></i>
+                <span>Semester Analytics</span>
+            </a>
+            <a href="{{ url_for('ai_insights') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'ai_insights' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-brain w-5 text-center text-indigo-400"></i>
+                <span>AI Insights</span>
+            </a>
+            <a href="{{ url_for('reports_summary') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'reports_summary' %}bg-indigo-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-file-invoice w-5 text-center"></i>
+                <span>Reports & Export</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+            <div>
+                <p class="font-medium text-slate-300">BCA Academic System</p>
+                <p>Python Flask + Scikit-Learn</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Topbar Header -->
+        <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+            <div>
+                <h2 class="text-xl font-bold text-slate-900">{% block header_title %}Academic Overview{% endblock %}</h2>
+                <p class="text-xs text-slate-500">Automated performance monitoring and student intervention system</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{{ url_for('export_csv') }}" class="inline-flex items-center px-3 py-2 border border-slate-300 text-xs font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition">
+                    <i class="fa-solid fa-download mr-1.5 text-slate-500"></i> Export CSV
+                </a>
+                <a href="{{ url_for('add_new_student') }}" class="inline-flex items-center px-3.5 py-2 border border-transparent text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Add Student
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash Notifications -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="px-6 pt-4 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="p-3.5 rounded-lg text-sm flex items-center justify-between shadow-sm {% if category == 'error' %}bg-rose-50 text-rose-800 border border-rose-200{% elif category == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                            <span><i class="fa-solid {% if category == 'error' %}fa-circle-xmark text-rose-500{% elif category == 'success' %}fa-circle-check text-emerald-500{% else %}fa-circle-info text-blue-500{% endif %} mr-2"></i>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Dynamic Body -->
+        <main class="p-6 flex-1 bg-slate-50">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
